@@ -9,7 +9,7 @@
 - **特征增强**：新增 ATR、波动区间 z-score、收益偏度、VPIN 代理因子。
 - **Purged Walk-forward**：支持 `embargo` 隔离窗口，降低标签泄漏风险。
 - **风险约束增强**：概率阈值 + 目标波动率缩放 + 趋势强度降杠杆。
-- **评估更完整**：除 Sharpe/MDD 外，新增 Accuracy、Brier、Win Rate、Calmar。
+- **评估更完整**：除 Sharpe/MDD 外，新增 Accuracy、Brier、Win Rate、Calmar、Sortino。
 
 ## 目录结构
 
@@ -24,13 +24,13 @@
 ## 快速开始
 
 ```bash
-python main.py --bars 3000 --freq 5min --horizon 6 --embargo 2
+python main.py --bars 3000 --freq 5min --horizon 6 --embargo 2 --trading-minutes-per-day 240
 ```
 
 如有真实数据：
 
 ```bash
-python main.py --csv data/510300_5min.csv --freq 5min --horizon 6 --embargo 2
+python main.py --csv data/510300_5min.csv --freq 5min --horizon 6 --embargo 2 --trading-minutes-per-day 240
 ```
 
 CSV 至少包含列：`timestamp,open,high,low,close,volume`。
@@ -54,3 +54,8 @@ CSV 至少包含列：`timestamp,open,high,low,close,volume`。
 - 在执行层引入 **ML / Trend / Mean-Reversion** 三策略融合。
 - 根据趋势强弱与波动状态动态切换权重，并对策略分歧进行降杠杆抑制。
 - 在不改变训练接口的前提下，显著降低回撤与换手冲击。
+
+- 年化指标按 `freq` 与 `trading_minutes_per_day` 自适应计算，避免固定 5min 年化偏差。
+
+- 支持频率格式：`5min` / `15m` / `1h`，并对非法频率输入做参数校验。
+- 执行步长会按波动率自适应收缩，高波动时自动降低换仓冲击。

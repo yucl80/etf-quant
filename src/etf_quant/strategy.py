@@ -16,7 +16,6 @@ def proba_to_position(
     vol_k: float = 7.0,
 ) -> float:
     """Convert ML probability to signed position with volatility/trend-aware sizing."""
-    """Convert probability to signed position with volatility/trend-aware sizing."""
     dynamic = min(0.63, base_threshold + rv_24 * vol_k)
 
     edge = abs(proba - 0.5)
@@ -86,4 +85,3 @@ def multi_strategy_position(
     disagreement = abs(ml_pos - tr_pos) + abs(ml_pos - mr_pos)
     damp = max(0.6, 1.0 - 0.15 * disagreement)
     return _clip(combined * damp, -max_leverage, max_leverage)
-    return max(-max_leverage, min(max_leverage, pos))
