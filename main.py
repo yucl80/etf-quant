@@ -12,7 +12,6 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--freq", type=str, default="5min", help="数据频率")
     p.add_argument("--horizon", type=int, default=6, help="预测周期（bar）")
     p.add_argument("--embargo", type=int, default=2, help="walk-forward 训练测试隔离 bar 数")
-    p.add_argument("--trading-minutes-per-day", type=int, default=240, help="用于年化指标的日内交易分钟数")
     return p.parse_args()
 
 
@@ -24,7 +23,6 @@ def main() -> None:
         freq=args.freq,
         horizon=args.horizon,
         embargo=args.embargo,
-        trading_minutes_per_day=args.trading_minutes_per_day,
     )
 
     print("=== Backtest Metrics ===")

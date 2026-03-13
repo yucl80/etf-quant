@@ -24,13 +24,13 @@
 ## 快速开始
 
 ```bash
-python main.py --bars 3000 --freq 5min --horizon 6 --embargo 2 --trading-minutes-per-day 240
+python main.py --bars 3000 --freq 5min --horizon 6 --embargo 2
 ```
 
 如有真实数据：
 
 ```bash
-python main.py --csv data/510300_5min.csv --freq 5min --horizon 6 --embargo 2 --trading-minutes-per-day 240
+python main.py --csv data/510300_5min.csv --freq 5min --horizon 6 --embargo 2
 ```
 
 CSV 至少包含列：`timestamp,open,high,low,close,volume`。
@@ -54,5 +54,3 @@ CSV 至少包含列：`timestamp,open,high,low,close,volume`。
 - 在执行层引入 **ML / Trend / Mean-Reversion** 三策略融合。
 - 根据趋势强弱与波动状态动态切换权重，并对策略分歧进行降杠杆抑制。
 - 在不改变训练接口的前提下，显著降低回撤与换手冲击。
-
-- 年化指标按 `freq` 与 `trading_minutes_per_day` 自适应计算，避免固定 5min 年化偏差。

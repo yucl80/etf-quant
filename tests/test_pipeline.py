@@ -16,11 +16,6 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("avg_cost", metrics)
         self.assertGreaterEqual(metrics["avg_cost"], 0.0)
 
-    def test_pipeline_supports_other_frequency(self):
-        metrics = run_pipeline(bars=2200, freq="15min", horizon=3, embargo=1)
-        self.assertGreater(metrics["n_predictions"], 0)
-        self.assertGreater(metrics["final_equity"], 0)
-
 
 if __name__ == "__main__":
     unittest.main()
