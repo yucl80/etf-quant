@@ -85,3 +85,23 @@ def multi_strategy_position(
     disagreement = abs(ml_pos - tr_pos) + abs(ml_pos - mr_pos)
     damp = max(0.6, 1.0 - 0.15 * disagreement)
     return _clip(combined * damp, -max_leverage, max_leverage)
+
+
+def market_timing_exposure(
+    trend: float,
+    rv_24: float,
+    prev_exposure: float,
+    min_exposure: float = 0.25,
+    max_exposure: float = 1.0,
+) -> float:
+    """Independent timing layer to control aggregate portfolio exposure."""
+    trend_signal = min(1.0, abs(trend) / 0.0020)
+    vol_penalty = min(1.0, rv_24 / 0.0025)
+
+    target = min_exposure + (max_exposure - min_exposure) * (0.75 * trend_signal + 0.25 * (1.0 - vol_penalty))
+    target = _clip(target, min_exposure, max_exposure)
+
+    # Smooth timing exposure to avoid frequent full-notional flips.
+    alpha = 0.35
+    exposure = (1.0 - alpha) * prev_exposure + alpha * target
+    return _clip(exposure, min_exposure, max_exposure)

@@ -16,6 +16,9 @@ class PipelineTest(unittest.TestCase):
         self.assertIn("avg_cost", metrics)
         self.assertIn("sortino", metrics)
         self.assertGreaterEqual(metrics["avg_cost"], 0.0)
+        self.assertIn("timing_avg_exposure", metrics)
+        self.assertGreaterEqual(metrics["timing_avg_exposure"], 0.0)
+        self.assertLessEqual(metrics["timing_avg_exposure"], 1.0)
 
     def test_pipeline_supports_other_frequency(self):
         metrics = run_pipeline(bars=2200, freq="15min", horizon=3, embargo=1)

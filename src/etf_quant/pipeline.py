@@ -4,7 +4,7 @@ from .backtest import run_backtest
 from .data import generate_synthetic_ohlcv, load_ohlcv
 from .features import build_dataset
 from .models import RegimeAwareEnsemble
-from .strategy import multi_strategy_position, proba_to_position
+from .strategy import market_timing_exposure, multi_strategy_position, proba_to_position
 
 
 def _parse_freq_minutes(freq: str) -> int:
@@ -104,6 +104,8 @@ def run_pipeline(
     labels: list[int] = []
     rv_24_seq: list[float] = []
     prev_pos = 0.0
+    timing_exposure = 1.0
+    exposure_seq: list[float] = []
 
     for train_idx, test_idx in _walk_forward_indices(n, train_size, test_size, embargo=embargo):
         model = RegimeAwareEnsemble()
@@ -133,18 +135,26 @@ def run_pipeline(
             vol_adj = max(0.45, min(1.0, 0.0016 / max(x[i]["rv_24"], 1e-6)))
             adaptive_step_cap = tuned_step_cap * vol_adj
 
-            pos = max(prev_pos - adaptive_step_cap, min(prev_pos + adaptive_step_cap, target_pos))
+            timing_exposure = market_timing_exposure(
+                trend=x[i]["trend"],
+                rv_24=x[i]["rv_24"],
+                prev_exposure=timing_exposure,
+            )
+
+            timed_target_pos = target_pos * timing_exposure
+            pos = max(prev_pos - adaptive_step_cap, min(prev_pos + adaptive_step_cap, timed_target_pos))
             prev_pos = pos
             pred_ts.append(ts[i])
             positions.append(pos)
             probs.append(p)
             labels.append(y[i])
             rv_24_seq.append(x[i]["rv_24"])
+            exposure_seq.append(timing_exposure)
 
     if not positions:
         raise ValueError("Walk-forward produced no predictions.")
 
-    return run_backtest(
+    metrics = run_backtest(
         series,
         pred_ts,
         positions,
@@ -153,3 +163,5 @@ def run_pipeline(
         rv_24_seq=rv_24_seq,
         bars_per_day=bars_per_day,
     )
+    metrics["timing_avg_exposure"] = sum(exposure_seq) / len(exposure_seq) if exposure_seq else 0.0
+    return metrics
