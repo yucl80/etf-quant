@@ -13,6 +13,8 @@ class PipelineTest(unittest.TestCase):
         self.assertGreaterEqual(metrics["brier"], 0.0)
         self.assertIn("calmar", metrics)
         self.assertIn("win_rate", metrics)
+        self.assertIn("avg_cost", metrics)
+        self.assertGreaterEqual(metrics["avg_cost"], 0.0)
 
 
 if __name__ == "__main__":

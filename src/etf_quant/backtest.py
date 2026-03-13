@@ -5,35 +5,28 @@ import math
 from .data import Bar
 
 
+
 def run_backtest(
     bars: list[Bar],
     timestamps: list,
     positions: list[float],
     probs: list[float],
     labels: list[int],
-    fee_bps: float = 1.2,
-    slippage_bps: float = 0.8,
+
 ) -> dict:
     bar_map = {b.timestamp: b for b in bars}
     closes = [bar_map[t].close for t in timestamps]
 
-    pnl: list[float] = []
-    equity = 1.0
-    curve: list[float] = []
+
 
     prev_pos = 0.0
     prev_close = closes[0]
     for i, pos in enumerate(positions):
         ret = 0.0 if i == 0 else (closes[i] / prev_close - 1.0)
         traded = abs(pos - prev_pos)
-        cost = traded * (fee_bps + slippage_bps) / 10000
-        p = prev_pos * ret - cost
-        pnl.append(p)
-        equity *= 1.0 + p
-        curve.append(equity)
-        prev_pos = pos
-        prev_close = closes[i]
 
+
+    mean_pnl = _mean(pnl)
     mean_pnl = sum(pnl) / len(pnl)
     var = sum((x - mean_pnl) ** 2 for x in pnl) / max(1, len(pnl) - 1)
     std = math.sqrt(var)
@@ -66,4 +59,5 @@ def run_backtest(
         "brier": brier,
         "win_rate": win_rate,
         "calmar": calmar,
+        "avg_cost": _mean(cost_series),
     }

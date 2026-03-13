@@ -36,6 +36,7 @@ def main() -> None:
         "win_rate",
         "calmar",
         "n_predictions",
+        "avg_cost",
     ]
     for key in ordered:
         value = metrics[key]
