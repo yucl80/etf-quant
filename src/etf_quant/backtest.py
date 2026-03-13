@@ -5,9 +5,6 @@ import math
 from .data import Bar
 
 
-def _mean(values: list[float]) -> float:
-    return sum(values) / len(values) if values else 0.0
-
 
 def run_backtest(
     bars: list[Bar],
@@ -15,21 +12,12 @@ def run_backtest(
     positions: list[float],
     probs: list[float],
     labels: list[int],
-    rv_24_seq: list[float] | None = None,
-    fee_bps: float = 1.2,
-    slippage_bps: float = 0.8,
-    impact_k: float = 250.0,
+
 ) -> dict:
     bar_map = {b.timestamp: b for b in bars}
     closes = [bar_map[t].close for t in timestamps]
 
-    if rv_24_seq is None:
-        rv_24_seq = [0.001 for _ in positions]
 
-    pnl: list[float] = []
-    equity = 1.0
-    curve: list[float] = []
-    cost_series: list[float] = []
 
     prev_pos = 0.0
     prev_close = closes[0]
@@ -37,19 +25,9 @@ def run_backtest(
         ret = 0.0 if i == 0 else (closes[i] / prev_close - 1.0)
         traded = abs(pos - prev_pos)
 
-        # Dynamic cost model: base fee + volatility-dependent slippage + impact by trade size.
-        dyn_slippage_bps = slippage_bps * (1.0 + min(2.0, rv_24_seq[i] * impact_k))
-        cost = traded * (fee_bps + dyn_slippage_bps) / 10000
-
-        p = prev_pos * ret - cost
-        pnl.append(p)
-        cost_series.append(cost)
-        equity *= 1.0 + p
-        curve.append(equity)
-        prev_pos = pos
-        prev_close = closes[i]
 
     mean_pnl = _mean(pnl)
+    mean_pnl = sum(pnl) / len(pnl)
     var = sum((x - mean_pnl) ** 2 for x in pnl) / max(1, len(pnl) - 1)
     std = math.sqrt(var)
 

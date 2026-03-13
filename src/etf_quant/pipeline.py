@@ -5,6 +5,7 @@ from .data import generate_synthetic_ohlcv, load_ohlcv
 from .features import build_dataset
 from .models import RegimeAwareEnsemble
 from .strategy import multi_strategy_position, proba_to_position
+from .strategy import proba_to_position
 
 
 def _walk_forward_indices(n: int, train_size: int, test_size: int, embargo: int = 0):
@@ -24,6 +25,9 @@ def _score_train_policy(probs: list[float], xs: list[dict[str, float]], ys: list
     prev_pos = 0.0
     turnover = 0.0
 
+    # proxy score: directional accuracy on high-confidence samples
+    hit = 0
+    total = 0
     for p, x, y in zip(probs, xs, ys):
         pos = proba_to_position(
             p,
@@ -62,6 +66,22 @@ def _tune_policy_on_train(model: RegimeAwareEnsemble, x_train: list[dict[str, fl
                 if s > best[0]:
                     best = (s, min_edge, base_thr, step_cap)
     return best[1], best[2], best[3]
+        total += 1
+    if total == 0:
+        return -1.0
+    coverage = total / len(probs)
+    return (hit / total) * 0.8 + coverage * 0.2
+
+
+def _tune_policy_on_train(model: RegimeAwareEnsemble, x_train: list[dict[str, float]], y_train: list[int]) -> tuple[float, float]:
+    probs = [model.predict_proba(x) for x in x_train]
+    best = (-1.0, 0.06, 0.56)
+    for min_edge in [0.04, 0.06, 0.08, 0.10]:
+        for base_thr in [0.54, 0.56, 0.58, 0.60]:
+            s = _score_train_policy(probs, x_train, y_train, min_edge=min_edge, base_thr=base_thr)
+            if s > best[0]:
+                best = (s, min_edge, base_thr)
+    return best[1], best[2]
 
 
 def run_pipeline(
@@ -100,6 +120,11 @@ def run_pipeline(
         for i in test_idx:
             p = model.predict_proba(x[i])
             ml_pos = proba_to_position(
+        tuned_min_edge, tuned_base_thr = _tune_policy_on_train(model, x_train, y_train)
+
+        for i in test_idx:
+            p = model.predict_proba(x[i])
+            target_pos = proba_to_position(
                 p,
                 x[i]["rv_24"],
                 x[i]["trend"],
@@ -113,6 +138,8 @@ def run_pipeline(
                 rv_24=x[i]["rv_24"],
             )
             pos = max(prev_pos - tuned_step_cap, min(prev_pos + tuned_step_cap, target_pos))
+            step_cap = 0.35
+            pos = max(prev_pos - step_cap, min(prev_pos + step_cap, target_pos))
             prev_pos = pos
             pred_ts.append(ts[i])
             positions.append(pos)
@@ -124,3 +151,4 @@ def run_pipeline(
         raise ValueError("Walk-forward produced no predictions.")
 
     return run_backtest(series, pred_ts, positions, probs, labels, rv_24_seq=rv_24_seq)
+    return run_backtest(series, pred_ts, positions, probs, labels)

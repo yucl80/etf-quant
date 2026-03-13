@@ -17,6 +17,7 @@
 - `src/etf_quant/features.py`：中高频特征工程
 - `src/etf_quant/models.py`：在线多专家状态感知集成
 - `src/etf_quant/strategy.py`：单策略信号映射 + 多策略组合仓位控制
+- `src/etf_quant/strategy.py`：信号映射与动态仓位控制
 - `src/etf_quant/backtest.py`：交易成本回测与预测质量评估
 - `src/etf_quant/pipeline.py`：Purged walk-forward 主流程
 - `main.py`：CLI 入口
